@@ -13,6 +13,7 @@ export interface VocabItem {
   hoverHeight: number;
   bobAmp?: number;
   spinSpeed?: number;
+  rideOnItemId?: string;
 }
 
 export interface SceneryProp {
@@ -641,7 +642,8 @@ export const STATIONS: StationData[] = [
         rotationY: 0.4,
         scale: 0.44,
         hoverHeight: 1.15,
-        bobAmp: 0.02
+        bobAmp: 0.015,
+        rideOnItemId: 'bistro_table'
       },
       {
         id: 'cake_plate',
@@ -656,7 +658,8 @@ export const STATIONS: StationData[] = [
         rotationY: -0.5,
         scale: 0.48,
         hoverHeight: 1.15,
-        bobAmp: 0.02
+        bobAmp: 0.015,
+        rideOnItemId: 'bistro_table'
       },
       {
         id: 'bistro_table',

@@ -13,6 +13,7 @@ interface InteractiveProp {
   ring: THREE.Mesh;
   baseY: number;
   baseScale: number;
+  hoverLiftCur: number;
   discovered: boolean;
   pulsePhase: number;
 }
@@ -437,7 +438,7 @@ export class DioramaManager {
       wrapper.rotation.y = item.rotationY;
       wrapper.add(model);
 
-      // Interactive ground/tabletop beacon ring
+      // Interactive ground/tabletop beacon ring (elevated + polygonOffset to eliminate Z-fighting!)
       const isDisc = discoveredIds.has(item.id);
       const isTabletop = item.position[1] > 0.5;
       const ringRadius = isTabletop
@@ -447,12 +448,17 @@ export class DioramaManager {
       const ringMat = new THREE.MeshBasicMaterial({
         color: isDisc ? '#10b981' : '#f59e0b',
         transparent: true,
-        opacity: isDisc ? 0.45 : 0.72,
-        side: THREE.DoubleSide
+        opacity: isDisc ? 0.52 : 0.78,
+        side: THREE.DoubleSide,
+        depthWrite: false,
+        polygonOffset: true,
+        polygonOffsetFactor: -4,
+        polygonOffsetUnits: -4
       });
       const ring = new THREE.Mesh(ringGeo, ringMat);
       ring.rotation.x = -Math.PI / 2;
-      ring.position.y = 0.025;
+      ring.position.y = isTabletop ? 0.032 : 0.062;
+      ring.renderOrder = 3;
       wrapper.add(ring);
 
       wrapper.userData.itemId = item.id;
@@ -468,6 +474,7 @@ export class DioramaManager {
         ring,
         baseY: item.position[1],
         baseScale: 1,
+        hoverLiftCur: 0,
         discovered: isDisc,
         pulsePhase: idx * 1.3
       });
@@ -501,13 +508,23 @@ export class DioramaManager {
     wrapper.rotation.y = ry;
     wrapper.add(model);
 
-    // Soft sky-blue guide pedestal ring under Barnaby
+    // Soft sky-blue guide pedestal ring under Barnaby (no Z-fighting)
     const ring = new THREE.Mesh(
       new THREE.RingGeometry(0.46, 0.58, 32),
-      new THREE.MeshBasicMaterial({ color: '#38bdf8', transparent: true, opacity: 0.65, side: THREE.DoubleSide })
+      new THREE.MeshBasicMaterial({
+        color: '#38bdf8',
+        transparent: true,
+        opacity: 0.7,
+        side: THREE.DoubleSide,
+        depthWrite: false,
+        polygonOffset: true,
+        polygonOffsetFactor: -4,
+        polygonOffsetUnits: -4
+      })
     );
     ring.rotation.x = -Math.PI / 2;
-    ring.position.y = 0.025;
+    ring.position.y = 0.062;
+    ring.renderOrder = 3;
     wrapper.add(ring);
 
     wrapper.userData.isGuide = true;
@@ -926,18 +943,53 @@ export class DioramaManager {
       this.guideOwlWrapper.position.y = this.guideOwlBaseY + Math.abs(Math.sin(t * 2.2)) * 0.08 + (this.guideHovered ? 0.12 : 0);
     }
 
-    // Interactive vocab props
+    // Interactive vocab props (update base props first, then tabletop props riding on them!)
+    const propById = new Map<string, InteractiveProp>();
+    for (const p of this.props) propById.set(p.item.id, p);
+
+    // Pass 1: Ground / host props
     for (const prop of this.props) {
+      if (prop.item.rideOnItemId) continue;
       const isHovered = prop === this.hoveredProp;
-      const targetScale = isHovered ? 1.11 : 1.0;
+      const isHostTable = this.props.some((other) => other.item.rideOnItemId === prop.item.id);
+      const targetScale = isHovered ? (isHostTable ? 1.04 : 1.11) : 1.0;
       prop.baseScale += (targetScale - prop.baseScale) * 0.14;
       prop.wrapper.scale.setScalar(prop.baseScale);
 
       const bob = prop.item.bobAmp ? Math.sin(t * 2.1 + prop.pulsePhase) * prop.item.bobAmp : 0;
-      const hoverLift = isHovered ? 0.14 : 0;
+      const hoverLift = isHovered ? (isHostTable ? 0.05 : 0.14) : 0;
       prop.wrapper.position.y += (prop.baseY + bob + hoverLift - prop.wrapper.position.y) * 0.14;
 
       const pulse = 1 + Math.sin(t * 3.0 + prop.pulsePhase) * (prop.discovered ? 0.03 : 0.08);
+      prop.ring.scale.setScalar(isHovered ? 1.18 : pulse);
+    }
+
+    // Pass 2: Tabletop props that ride smoothly on top of a host prop (never sinking!)
+    for (const prop of this.props) {
+      if (!prop.item.rideOnItemId) continue;
+      const host = propById.get(prop.item.rideOnItemId);
+      const isHovered = prop === this.hoveredProp;
+      const targetScale = isHovered ? 1.14 : 1.0;
+      prop.baseScale += (targetScale - prop.baseScale) * 0.14;
+      prop.wrapper.scale.setScalar(prop.baseScale);
+
+      let surfaceY = prop.baseY;
+      let targetX = prop.item.position[0];
+      let targetZ = prop.item.position[2];
+      if (host) {
+        surfaceY = host.wrapper.position.y + prop.baseY * host.wrapper.scale.y + 0.01;
+        targetX = host.wrapper.position.x + (prop.item.position[0] - host.item.position[0]) * host.wrapper.scale.x;
+        targetZ = host.wrapper.position.z + (prop.item.position[2] - host.item.position[2]) * host.wrapper.scale.z;
+      }
+
+      const bob = prop.item.bobAmp ? Math.sin(t * 2.1 + prop.pulsePhase) * prop.item.bobAmp : 0;
+      const targetLift = isHovered ? 0.12 : 0;
+      prop.hoverLiftCur += (targetLift - prop.hoverLiftCur) * 0.16;
+      prop.wrapper.position.x = targetX;
+      prop.wrapper.position.z = targetZ;
+      prop.wrapper.position.y = surfaceY + Math.max(0, bob) + prop.hoverLiftCur;
+
+      const pulse = 1 + Math.sin(t * 3.0 + prop.pulsePhase) * (prop.discovered ? 0.03 : 0.07);
       prop.ring.scale.setScalar(isHovered ? 1.18 : pulse);
     }
 
