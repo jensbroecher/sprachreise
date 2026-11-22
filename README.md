@@ -2,6 +2,8 @@
 
 Ein interaktives 3D-Edutainment-Lernspiel für einfaches Reise-Englisch (Niveau A1), gebaut mit **Three.js**, **TypeScript/Vite** und **Sand3D** (Python + Headless-Blender `bpy`).
 
+🌐 **Live-Demo (GitHub Pages):** [https://jensbroecher.github.io/sprachreise/](https://jensbroecher.github.io/sprachreise/)
+
 ## ✨ Features
 - **5 liebevolle 3D-Reise-Stationen (42 prozedurale Sand3D-Modelle):**
   1. **✈️ Airport (Flughafen):** *Suitcase, Passport, Backpack, Camera, Airplane, Departure Gate* (+ Control Tower & Luggage Cart)
