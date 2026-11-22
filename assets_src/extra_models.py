@@ -878,29 +878,81 @@ def build_espresso_counter():
 
 def build_cafe_plant():
     parts = []
-    pot = s3d.cone("cp_pot", 180, 220, d2=265)
+    # Terracotta saucer + fluted planter pot
+    saucer = s3d.cylinder("cp_saucer", 225, 22)
+    s3d.material(saucer, "ceramic", color="#9a3412")
+    parts.append(saucer)
+
+    pot = s3d.cone("cp_pot", 185, 225, d2=275)
+    s3d.at(pot, z=18)
     s3d.material(pot, "ceramic", color="#c2410c")
     parts.append(pot)
 
-    rim = s3d.torus("cp_rim", 265, 32)
-    s3d.at(rim, z=212)
+    # Decorative ribs & brass band around planter
+    for i in range(8):
+        ang = math.radians(i * 45)
+        rib = s3d.cylinder(f"cp_rib_{i}", 20, 185)
+        s3d.at(rib, x=math.cos(ang) * 112, y=math.sin(ang) * 112, z=38)
+        s3d.material(rib, "ceramic", color="#b45309")
+        parts.append(rib)
+
+    rim = s3d.torus("cp_rim", 275, 34)
+    s3d.at(rim, z=228)
     s3d.material(rim, "ceramic", color="#ea580c")
     parts.append(rim)
 
-    stem = s3d.cylinder("cp_stem", 48, 360)
-    s3d.at(stem, z=180)
-    s3d.material(stem, "walnut")
-    parts.append(stem)
+    # Rich dark soil mound
+    soil = s3d.dome("cp_soil", 240, 32)
+    s3d.at(soil, z=225)
+    s3d.material(soil, "concrete", color="#451a03", roughness=0.95)
+    parts.append(soil)
 
-    b1 = s3d.sphere("cp_b1", 280)
-    s3d.at(b1, z=320)
-    s3d.material(b1, "plastic", color="#16a34a", roughness=0.8)
-    parts.append(b1)
+    # Braided woody twin stems
+    for side, sgn in (("L", -1), ("R", 1)):
+        st = s3d.cylinder(f"cp_stem_{side}", 32, 340)
+        s3d.at(st, x=sgn * 18, z=225, ry=sgn * 4)
+        s3d.material(st, "walnut", color="#78350f")
+        parts.append(st)
 
-    b2 = s3d.sphere("cp_b2", 195)
-    s3d.at(b2, z=540)
-    s3d.material(b2, "plastic", color="#22c55e", roughness=0.8)
-    parts.append(b2)
+    # Lower leafy shrub cluster around pot base
+    for i in range(6):
+        ang = math.radians(i * 60)
+        lf = s3d.sphere(f"cp_low_{i}", 88)
+        s3d.at(lf, x=math.cos(ang) * 72, y=math.sin(ang) * 72, z=235)
+        s3d.material(lf, "plastic", color="#15803d" if i % 2 == 0 else "#16a34a", roughness=0.8)
+        parts.append(lf)
+
+    # Lush sculpted topiary crown with layered leaf puffs + little café blossoms
+    crown_clusters = [
+        (0, 0, 385, 210, "#15803d"),
+        (-82, 48, 370, 135, "#16a34a"),
+        (85, -42, 375, 140, "#16a34a"),
+        (42, 82, 385, 130, "#22c55e"),
+        (-48, -78, 380, 130, "#15803d"),
+        (0, 0, 505, 175, "#22c55e"),
+        (-55, 25, 535, 110, "#4ade80"),
+        (52, -28, 530, 115, "#16a34a"),
+        (0, 0, 610, 115, "#4ade80"),
+    ]
+    for idx, (px, py, pz, d, col) in enumerate(crown_clusters):
+        c = s3d.sphere(f"cp_leaf_{idx}", d)
+        s3d.at(c, x=px, y=py, z=pz)
+        s3d.material(c, "plastic", color=col, roughness=0.8)
+        parts.append(c)
+
+    # Tiny cheerful blossoms on the topiary
+    blooms = [
+        (-95, -55, 445, "#f43f5e"),
+        (98, 42, 455, "#fb7185"),
+        (12, -92, 540, "#facc15"),
+        (-62, 65, 575, "#f43f5e"),
+        (64, -52, 585, "#fde047"),
+    ]
+    for idx, (bx, by, bz, col) in enumerate(blooms):
+        bl = s3d.sphere(f"cp_bloom_{idx}", 36)
+        s3d.at(bl, x=bx, y=by, z=bz)
+        s3d.material(bl, "plastic", color=col, roughness=0.5)
+        parts.append(bl)
 
     return s3d.assembly("cafe_plant", *parts)
 
@@ -1080,25 +1132,138 @@ def build_park_fountain():
 
 def build_park_tree():
     parts = []
-    # Tapered oak trunk
-    trunk = s3d.cone("tr_trunk", 155, 420, d2=85)
+    # Stone park tree-pit border & mossy soil base
+    pit_ring = s3d.torus("tr_pit", 345, 36)
+    s3d.at(pit_ring, z=14)
+    s3d.material(pit_ring, "concrete", color="#94a3b8")
+    parts.append(pit_ring)
+
+    soil = s3d.dome("tr_soil", 335, 38)
+    s3d.material(soil, "concrete", color="#5c3a21", roughness=0.95)
+    parts.append(soil)
+
+    # 5 flared organic wooden roots anchoring into the ground
+    for i in range(5):
+        ang = math.radians(i * 72 + 12)
+        root = s3d.cone(f"tr_root_{i}", 68, 165, d2=26)
+        s3d.at(root, x=math.cos(ang) * 45, y=math.sin(ang) * 45, z=62, rx=math.sin(ang) * 58, ry=-math.cos(ang) * 58)
+        s3d.material(root, "walnut", color="#6b3a19")
+        parts.append(root)
+
+    # Cute little red-capped park mushrooms & grass tuft by the roots
+    for mi, (mx, my, mh) in enumerate(((-105, -72, 34), (-78, -96, 26))):
+        m_stem = s3d.cylinder(f"mush_s_{mi}", 18, mh)
+        s3d.at(m_stem, x=mx, y=my, z=18)
+        s3d.material(m_stem, "plastic", color="#fef3c7")
+        parts.append(m_stem)
+        m_cap = s3d.dome(f"mush_c_{mi}", 44 if mi == 0 else 34, 24)
+        s3d.at(m_cap, x=mx, y=my, z=18 + mh)
+        s3d.material(m_cap, "glossy_plastic", color="#ef4444")
+        parts.append(m_cap)
+
+    # Tapered oak trunk with bark ridges + hollow knothole!
+    trunk = s3d.cone("tr_trunk", 162, 430, d2=96)
+    s3d.at(trunk, z=15)
     s3d.material(trunk, "walnut", color="#78350f")
     parts.append(trunk)
 
-    # Lush multi-layered green foliage puffs
+    # Vertical sculpted bark ridges around trunk
+    for i in range(6):
+        ang = math.radians(i * 60)
+        ridge = s3d.cone(f"tr_bark_{i}", 34, 340, d2=18)
+        s3d.at(ridge, x=math.cos(ang) * 62, y=math.sin(ang) * 62, z=25)
+        s3d.material(ridge, "walnut", color="#5c2d0c")
+        parts.append(ridge)
+
+    # Dark knothole ring on front (-Y)
+    knot_rim = s3d.torus("tr_knot_rim", 52, 14)
+    s3d.at(knot_rim, y=-68, z=205, rx=90)
+    s3d.material(knot_rim, "walnut", color="#5c2d0c")
+    parts.append(knot_rim)
+
+    knot_in = s3d.cylinder("tr_knot_in", 42, 22)
+    s3d.at(knot_in, y=-54, z=205, rx=90)
+    s3d.material(knot_in, "rubber", color="#1c1917")
+    parts.append(knot_in)
+
+    # 4 prominent wooden branches forking up into the canopy!
+    branches = [
+        (-28, 12, 335, 62, 210, 32, -44, 18),
+        (26, -15, 345, 58, 205, 30, 42, -16),
+        (10, 28, 355, 56, 195, 28, 12, 42),
+        (-12, -26, 360, 54, 190, 26, -14, -40),
+    ]
+    for bi, (bx, by, bz, d1, bh, d2, rx, ry) in enumerate(branches):
+        br = s3d.cone(f"tr_branch_{bi}", d1, bh, d2=d2)
+        s3d.at(br, x=bx, y=by, z=bz, rx=rx, ry=ry)
+        s3d.material(br, "walnut", color="#6b3a19")
+        parts.append(br)
+
+    # Charming miniature yellow wooden birdhouse hanging from the right branch!
+    bh_rope = s3d.cylinder("bh_rope", 8, 55)
+    s3d.at(bh_rope, x=138, y=-22, z=368)
+    s3d.material(bh_rope, "brass")
+    parts.append(bh_rope)
+
+    bh_box = s3d.box("bh_box", 76, 68, 78)
+    s3d.at(bh_box, x=138, y=-22, z=294)
+    s3d.material(bh_box, "oak", color="#f59e0b")
+    parts.append(bh_box)
+
+    bh_roof = s3d.wedge("bh_roof", 98, 86, 42, top=14)
+    s3d.at(bh_roof, x=138, y=-22, z=370)
+    s3d.material(bh_roof, "glossy_plastic", color="#dc2626")
+    parts.append(bh_roof)
+
+    bh_hole = s3d.cylinder("bh_hole", 24, 14)
+    s3d.at(bh_hole, x=138, y=-54, z=336, rx=90)
+    s3d.material(bh_hole, "rubber", color="#0f172a")
+    parts.append(bh_hole)
+
+    # Rich, botanical multi-layered foliage crown (18 sculpted leaf clusters in 5 shades of green!)
     puffs = [
-        (0, 0, 355, 340, "#15803d"),
-        (-135, 65, 315, 240, "#16a34a"),
-        (140, -55, 325, 250, "#16a34a"),
-        (25, 115, 385, 235, "#22c55e"),
-        (-35, -105, 375, 230, "#15803d"),
-        (0, 0, 515, 245, "#22c55e"),
+        # Deep shadow inner canopy
+        (0, 0, 445, 275, "#14532d"),
+        (-135, 35, 425, 205, "#15803d"),
+        (145, -25, 435, 210, "#15803d"),
+        (25, 130, 440, 200, "#14532d"),
+        (-30, -125, 435, 195, "#15803d"),
+        # Mid-layer lush leaf bunches
+        (-175, -45, 465, 165, "#16a34a"),
+        (170, 65, 470, 170, "#16a34a"),
+        (-95, 135, 485, 168, "#16a34a"),
+        (105, -130, 480, 172, "#22c55e"),
+        (-110, -105, 510, 155, "#22c55e"),
+        (115, 105, 515, 158, "#16a34a"),
+        # Sunlit upper foliage highlights
+        (-65, 35, 565, 175, "#22c55e"),
+        (72, -30, 570, 170, "#22c55e"),
+        (5, 75, 585, 160, "#4ade80"),
+        (-15, -68, 575, 155, "#4ade80"),
+        (0, 0, 645, 165, "#4ade80"),
+        (45, 25, 665, 115, "#84cc16"),
+        (-48, -20, 655, 110, "#84cc16"),
     ]
     for idx, (px, py, pz, d, col) in enumerate(puffs):
         p = s3d.sphere(f"tr_leaf_{idx}", d)
         s3d.at(p, x=px, y=py, z=pz)
         s3d.material(p, "plastic", color=col, roughness=0.82)
         parts.append(p)
+
+    # A few cheerful red park apples & sunlit blossoms nestled in the foliage!
+    accents = [
+        (-145, -95, 515, "#ef4444"),
+        (152, -72, 520, "#ef4444"),
+        (68, 128, 545, "#f472b6"),
+        (-92, 92, 605, "#fde047"),
+        (82, -85, 620, "#ef4444"),
+        (-15, -135, 510, "#f472b6"),
+    ]
+    for idx, (ax, ay, az, col) in enumerate(accents):
+        dot = s3d.sphere(f"tr_acc_{idx}", 34)
+        s3d.at(dot, x=ax, y=ay, z=az)
+        s3d.material(dot, "glossy_plastic", color=col, roughness=0.35)
+        parts.append(dot)
 
     return s3d.assembly("park_tree", *parts)
 
