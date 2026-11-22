@@ -1,0 +1,21 @@
+{
+  "name": "sprachreise",
+  "private": true,
+  "version": "1.0.0",
+  "description": "3D Edutainment English Learning Travel Game built with Three.js & Sand3D",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "assets": ".venv\\Scripts\\python.exe assets_src/build_assets.py"
+  },
+  "dependencies": {
+    "three": "^0.174.0"
+  },
+  "devDependencies": {
+    "@types/three": "^0.174.0",
+    "typescript": "^5.7.3",
+    "vite": "^6.2.0"
+  }
+}
