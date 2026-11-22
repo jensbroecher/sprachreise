@@ -2,6 +2,7 @@ import './styles.css';
 import { STATIONS, StationData, VocabItem, StationTask } from './data/stations';
 import { DioramaManager, TimeOfDay } from './scene/DioramaManager';
 import { sound } from './audio';
+import { icon } from './icons';
 
 const STORAGE_KEY = 'sprachreise_save_v1';
 
@@ -182,14 +183,26 @@ function totalVocabCount(): number {
   return STATIONS.reduce((sum, s) => sum + s.items.length, 0);
 }
 
+function hydrateStaticIcons(): void {
+  document.querySelectorAll<HTMLElement>('[data-icon]').forEach((el) => {
+    const name = el.dataset.icon || 'star';
+    const size = (el.dataset.size as 'xs' | 'sm' | 'md' | 'lg' | 'xl') || 'md';
+    el.innerHTML = icon(name, size);
+  });
+}
+
+function updateMuteButton(): void {
+  btnMute.innerHTML = icon(sound.muted ? 'speaker_muted' : 'speaker', 'sm');
+}
+
 function updateTimeButton(): void {
-  const icons: Record<TimeOfDay, string> = { day: '☀️', sunset: '🌇', night: '🌙' };
+  const icons: Record<TimeOfDay, string> = { day: 'sun', sunset: 'sunset', night: 'moon' };
   const labels: Record<TimeOfDay, string> = {
     day: 'Tageszeit: Tag (klicken für Sonnenuntergang)',
     sunset: 'Tageszeit: Abendrot (klicken für Nacht)',
     night: 'Tageszeit: Sternennacht (klicken für Tag)'
   };
-  btnTime.textContent = icons[state.timeOfDay];
+  btnTime.innerHTML = icon(icons[state.timeOfDay], 'sm');
   btnTime.title = labels[state.timeOfDay];
 }
 
@@ -198,6 +211,7 @@ function updateHud(): void {
   vocabBadgeEl.textContent = `${state.discoveredIds.size}/${totalVocabCount()}`;
   stampBadgeEl.textContent = `${state.completedStations.size}/${STATIONS.length}`;
   updateTimeButton();
+  updateMuteButton();
   renderStationTabs();
   renderStationBanner();
   saveProgress();
@@ -209,7 +223,7 @@ function renderStationTabs(): void {
     const btn = document.createElement('button');
     btn.className = `station-tab ${idx === state.stationIndex ? 'active' : ''}`;
     const done = state.completedStations.has(st.id);
-    btn.innerHTML = `<span>${st.icon}</span><span>${st.nameDe}</span>${done ? '<span class="tab-check">✓</span>' : ''}`;
+    btn.innerHTML = `${icon(st.icon, 'sm')}<span>${st.nameDe}</span>${done ? '<span class="tab-check">✓</span>' : ''}`;
     btn.addEventListener('click', () => {
       if (idx !== state.stationIndex) {
         sound.playClick();
@@ -223,19 +237,21 @@ function renderStationTabs(): void {
 function renderStationBanner(): void {
   const st = currentStation();
   stationStepTag.textContent = `Station ${st.index + 1} von ${STATIONS.length}`;
-  stationTitleEl.textContent = `${st.icon} ${st.nameEn} (${st.nameDe})`;
+  stationTitleEl.innerHTML = `${icon(st.icon, 'lg')}<span>${st.nameEn} (${st.nameDe})</span>`;
   stationSubtitleEl.textContent = st.descriptionDe;
 
   const stamped = state.completedStations.has(st.id);
   stationStampPill.classList.toggle('hidden', !stamped);
-  btnStartMission.textContent = stamped ? '🔁 Aufgaben wiederholen' : '🎯 Aufgaben starten';
+  btnStartMission.innerHTML = stamped
+    ? `${icon('target', 'sm')} Aufgaben wiederholen`
+    : `${icon('target', 'sm')} Aufgaben starten`;
 
   discoveryDotsEl.innerHTML = '';
   st.items.forEach((item) => {
     const found = state.discoveredIds.has(item.id);
     const dot = document.createElement('button');
     dot.className = `disc-dot ${found ? 'found' : ''}`;
-    dot.textContent = found ? item.emoji : '?';
+    dot.innerHTML = found ? icon(item.id, 'xs') : '?';
     dot.title = found ? `${item.en} (${item.de})` : 'Noch nicht entdeckt — klicke das 3D-Objekt!';
     dot.addEventListener('click', () => {
       sound.playClick();
@@ -250,7 +266,7 @@ function renderStationBanner(): void {
 
 function showTravelBanner(st: StationData): void {
   if (travelBannerTimer) window.clearTimeout(travelBannerTimer);
-  travelIcon.textContent = st.icon;
+  travelIcon.innerHTML = icon(st.icon, 'md');
   travelText.textContent = `Willkommen: ${st.nameEn} (${st.nameDe})`;
   travelBanner.classList.remove('hidden');
   travelBannerTimer = window.setTimeout(() => {
@@ -277,7 +293,7 @@ function switchStation(idx: number): void {
 function openVocabCard(item: VocabItem, isNew: boolean): void {
   activeVocabItem = item;
   owlToast.classList.add('hidden');
-  vocabEmoji.textContent = item.emoji;
+  vocabEmoji.innerHTML = icon(item.id, 'lg');
   vocabEn.textContent = item.en;
   vocabPhonetic.textContent = item.phonetic;
   vocabDe.textContent = item.de;
@@ -379,10 +395,10 @@ function renderCurrentTask(): void {
       <p class="mission-prompt">${task.promptDe}</p>
       <div class="mission-callout">
         <strong>„${task.promptEn}“</strong>
-        <button id="btn-play-find" class="speak-btn">🔊 Anhören</button>
+        <button id="btn-play-find" class="speak-btn">${icon('speaker', 'xs')} Anhören</button>
       </div>
       <div class="mission-actions-row">
-        <button id="btn-find-hint" class="ghost-btn">💡 Tipp anzeigen</button>
+        <button id="btn-find-hint" class="ghost-btn">${icon('hint', 'sm')} Tipp anzeigen</button>
       </div>
       <div id="find-hint-box" class="hint-text hidden">${task.hintDe}</div>
     `;
@@ -397,13 +413,13 @@ function renderCurrentTask(): void {
     const bubble = document.createElement('div');
     bubble.className = 'npc-bubble';
     bubble.innerHTML = `
-      <div class="npc-avatar">${task.speakerEmoji}</div>
+      <div class="npc-avatar">${icon(task.speakerEmoji, 'lg')}</div>
       <div style="flex:1">
         <div class="npc-name">${task.speakerName}</div>
         <div class="npc-en">${task.npcLineEn}</div>
         <div class="npc-de">${task.npcLineDe}</div>
       </div>
-      <button id="btn-play-npc" class="speak-btn small">🔊</button>
+      <button id="btn-play-npc" class="speak-btn small">${icon('speaker', 'xs')}</button>
     `;
     missionBody.appendChild(bubble);
 
@@ -532,13 +548,13 @@ function renderCurrentTask(): void {
 
 function showMissionFeedback(ok: boolean, message: string): void {
   missionFeedback.className = `mission-feedback ${ok ? 'ok' : 'err'}`;
-  missionFeedback.innerHTML = `<span>${ok ? '✅' : '💡'} ${message}</span>`;
+  missionFeedback.innerHTML = `<span class="title-with-icon">${icon(ok ? 'check' : 'hint', 'sm')}<span>${message}</span></span>`;
 
   if (ok) {
     const nextBtn = document.createElement('button');
     nextBtn.className = 'primary-btn small';
     const isLast = state.taskIndex >= currentStation().tasks.length - 1;
-    nextBtn.textContent = isLast ? 'Stempel holen 🛂' : 'Weiter →';
+    nextBtn.innerHTML = isLast ? `Stempel holen ${icon('passport', 'xs')}` : 'Weiter →';
     nextBtn.addEventListener('click', () => {
       sound.playClick();
       if (isLast) {
@@ -565,13 +581,13 @@ function completeCurrentStation(): void {
   diorama.burstConfetti();
   updateHud();
 
-  toastStampIcon.textContent = st.icon;
+  toastStampIcon.innerHTML = icon(st.icon, 'lg');
   toastStampTitle.textContent = `Stempel erhalten: ${st.nameEn}!`;
   const hasNext = state.stationIndex < STATIONS.length - 1;
   toastStampSub.textContent = hasNext
     ? `Auf geht’s zur nächsten Station: ${STATIONS[state.stationIndex + 1].nameDe}!`
     : 'Du hast alle 5 Stationen abgeschlossen — schau in deinen Reisepass!';
-  toastNextBtn.textContent = hasNext ? 'Nächste Station →' : 'Reisepass öffnen 🛂';
+  toastNextBtn.innerHTML = hasNext ? 'Nächste Station →' : `Reisepass öffnen ${icon('passport', 'xs')}`;
   stampToast.classList.remove('hidden');
 }
 
@@ -645,22 +661,22 @@ function renderQuizQuestion(): void {
   activeQuiz.answered = false;
 
   quizCounterEl.textContent = `Frage ${activeQuiz.index + 1} / ${activeQuiz.questions.length}`;
-  quizStreakEl.textContent = `🔥 Serie: ${activeQuiz.streak}`;
-  quizScoreEl.textContent = `⭐ +${activeQuiz.earnedStars}`;
+  quizStreakEl.innerHTML = `${icon('fire', 'xs')} Serie: ${activeQuiz.streak}`;
+  quizScoreEl.innerHTML = `${icon('star', 'xs')} +${activeQuiz.earnedStars}`;
 
   const modeMeta = {
     listen: {
-      badge: '🔊 Hör-Verstehen',
+      badge: `${icon('speaker', 'xs')} Hör-Verstehen`,
       prompt: 'Welches Wort hörst du?',
       speakText: q.target.en
     },
     de2en: {
-      badge: '🇩🇪 → 🇬🇧 Übersetzen',
-      prompt: `${q.target.emoji} ${q.target.de}`,
+      badge: `${icon('flag-de', 'xs')} → ${icon('flag-gb', 'xs')} Übersetzen`,
+      prompt: `${icon(q.target.id, 'lg')} <span>${q.target.de}</span>`,
       speakText: null
     },
     en2de: {
-      badge: '🇬🇧 → 🇩🇪 Bedeutung finden',
+      badge: `${icon('flag-gb', 'xs')} → ${icon('flag-de', 'xs')} Bedeutung finden`,
       prompt: `„${q.target.en}“`,
       speakText: q.target.en
     }
@@ -670,7 +686,7 @@ function renderQuizQuestion(): void {
     <div class="quiz-question-box">
       <div class="quiz-mode-label">${modeMeta.badge}</div>
       <div class="quiz-prompt-big">${modeMeta.prompt}</div>
-      ${modeMeta.speakText ? `<button id="quiz-replay-audio" class="speak-btn">🔊 Nochmal anhören</button>` : ''}
+      ${modeMeta.speakText ? `<button id="quiz-replay-audio" class="speak-btn">${icon('speaker', 'xs')} Nochmal anhören</button>` : ''}
     </div>
     <div id="quiz-options" class="quiz-options-grid"></div>
     <div id="quiz-feedback" class="mission-feedback hidden"></div>
@@ -691,8 +707,8 @@ function renderQuizQuestion(): void {
     btn.className = 'quiz-opt-btn';
     btn.innerHTML =
       q.mode === 'de2en'
-        ? `<span>🇬🇧</span><span>${choice.en}</span>`
-        : `<span>${choice.emoji}</span><span>${choice.de}</span>`;
+        ? `${icon('flag-gb', 'sm')}<span>${choice.en}</span>`
+        : `${icon(choice.id, 'md')}<span>${choice.de}</span>`;
 
     btn.addEventListener('click', () => {
       if (!activeQuiz || activeQuiz.answered) return;
@@ -713,17 +729,17 @@ function renderQuizQuestion(): void {
         }
         updateHud();
         fbEl.className = 'mission-feedback ok';
-        fbEl.innerHTML = `<span>✅ Richtig! <strong>${q.target.en}</strong> = ${q.target.de}</span>`;
+        fbEl.innerHTML = `<span class="title-with-icon">${icon('check', 'sm')}<span>Richtig! <strong>${q.target.en}</strong> = ${q.target.de}</span></span>`;
       } else {
         btn.classList.add('wrong');
         sound.playError();
         activeQuiz.streak = 0;
         fbEl.className = 'mission-feedback err';
-        fbEl.innerHTML = `<span>💡 Gesucht war <strong>${q.target.en}</strong> (${q.target.de}).</span>`;
+        fbEl.innerHTML = `<span class="title-with-icon">${icon('hint', 'sm')}<span>Gesucht war <strong>${q.target.en}</strong> (${q.target.de}).</span></span>`;
       }
 
-      quizStreakEl.textContent = `🔥 Serie: ${activeQuiz.streak}`;
-      quizScoreEl.textContent = `⭐ +${activeQuiz.earnedStars}`;
+      quizStreakEl.innerHTML = `${icon('fire', 'xs')} Serie: ${activeQuiz.streak}`;
+      quizScoreEl.innerHTML = `${icon('star', 'xs')} +${activeQuiz.earnedStars}`;
 
       const nextBtn = document.createElement('button');
       nextBtn.className = 'primary-btn small';
@@ -756,11 +772,11 @@ function renderQuizSummary(): void {
   }
   quizStageEl.innerHTML = `
     <div class="quiz-summary">
-      <div class="quiz-summary-emoji">${pct >= 80 ? '🏆' : pct >= 50 ? '🎉' : '💪'}</div>
+      <div class="quiz-summary-emoji">${icon(pct >= 50 ? 'trophy' : 'star', 'xl')}</div>
       <h3>${correctCount} von ${questions.length} richtig (${pct}%)!</h3>
-      <p>Du hast <strong>+${earnedStars} Sterne ⭐</strong> gesammelt. Beste Serie bisher: <strong>🔥 ${state.bestQuizStreak}</strong>.</p>
+      <p>Du hast <strong>+${earnedStars} Sterne</strong> gesammelt. Beste Serie bisher: <strong>${state.bestQuizStreak}</strong>.</p>
       <div class="mission-actions-row" style="justify-content:center">
-        <button id="btn-quiz-again" class="primary-btn small">Neue Runde spielen 🔁</button>
+        <button id="btn-quiz-again" class="primary-btn small">Neue Runde spielen</button>
         <button id="btn-quiz-done" class="ghost-btn">Zurück zur 3D-Welt</button>
       </div>
     </div>
@@ -785,12 +801,12 @@ function openVocabNotebook(): void {
       card.className = `vocab-entry ${unlocked ? '' : 'locked'}`;
       card.innerHTML = `
         <div class="vocab-entry-top">
-          <span class="vocab-entry-emoji">${unlocked ? item.emoji : '🔒'}</span>
-          ${unlocked ? `<button class="speak-btn small">🔊</button>` : ''}
+          <span class="vocab-entry-emoji">${unlocked ? icon(item.id, 'lg') : icon('lock', 'md')}</span>
+          ${unlocked ? `<button class="speak-btn small">${icon('speaker', 'xs')}</button>` : ''}
         </div>
         <div class="vocab-entry-en">${unlocked ? item.en : '???'}</div>
         <div class="vocab-entry-de">${unlocked ? item.de : 'Noch nicht entdeckt'}</div>
-        <div class="vocab-entry-station">${st.icon} ${st.nameDe}</div>
+        <div class="vocab-entry-station title-with-icon">${icon(st.icon, 'xs')}<span>${st.nameDe}</span></div>
       `;
       if (unlocked) {
         card.querySelector('button')?.addEventListener('click', () => {
@@ -812,14 +828,14 @@ function openPassportModal(): void {
     slot.className = `passport-slot ${earned ? 'earned' : ''}`;
     slot.style.setProperty('--slot-color', st.stampColor);
     slot.innerHTML = `
-      <div class="stamp-ring">${earned ? st.icon : '?'}</div>
+      <div class="stamp-ring">${earned ? icon(st.icon, 'lg') : '?'}</div>
       <div class="stamp-title">${st.nameEn}</div>
       <div class="stamp-code">${earned ? st.stampLabel : 'NOCH OFFEN'}</div>
     `;
     passportStampsEl.appendChild(slot);
   });
   passportCelebration.classList.toggle('hidden', state.completedStations.size < STATIONS.length);
-  bestStreakLabel.textContent = `🔥 Beste Quiz-Serie: ${state.bestQuizStreak}`;
+  bestStreakLabel.innerHTML = `${icon('fire', 'sm')} Beste Quiz-Serie: ${state.bestQuizStreak}`;
   passportModal.classList.remove('hidden');
 }
 
@@ -828,7 +844,7 @@ diorama.onItemClick = (item) => handleItemClick(item);
 diorama.onGuideClick = () => handleGuideClick();
 diorama.onGuideHover = (hovering, x, y) => {
   if (!hovering) return;
-  hoverTooltip.textContent = '🦉 Barnaby — Klick für einen Tipp!';
+  hoverTooltip.innerHTML = `${icon('owl', 'sm')}<span>Barnaby — Klick für einen Tipp!</span>`;
   hoverTooltip.style.left = `${x}px`;
   hoverTooltip.style.top = `${y}px`;
   hoverTooltip.classList.remove('hidden');
@@ -839,7 +855,9 @@ diorama.onItemHover = (item, x, y) => {
     return;
   }
   const found = state.discoveredIds.has(item.id);
-  hoverTooltip.textContent = found ? `${item.emoji} ${item.en} (${item.de})` : `${item.emoji} Klick zum Entdecken!`;
+  hoverTooltip.innerHTML = found
+    ? `${icon(item.id, 'sm')}<span>${item.en} (${item.de})</span>`
+    : `${icon(item.id, 'sm')}<span>Klick zum Entdecken!</span>`;
   hoverTooltip.style.left = `${x}px`;
   hoverTooltip.style.top = `${y}px`;
   hoverTooltip.classList.remove('hidden');
@@ -884,7 +902,7 @@ btnTime.addEventListener('click', () => {
 
 btnMute.addEventListener('click', () => {
   sound.muted = !sound.muted;
-  btnMute.textContent = sound.muted ? '🔇' : '🔊';
+  updateMuteButton();
 });
 
 btnBeginJourney.addEventListener('click', () => {
@@ -925,6 +943,7 @@ toastNextBtn.addEventListener('click', () => {
 
 // Boot Application
 async function boot(): Promise<void> {
+  hydrateStaticIcons();
   await diorama.preloadAllModels((loaded, total, label) => {
     const pct = Math.round((loaded / total) * 100);
     loadingBarFill.style.width = `${pct}%`;

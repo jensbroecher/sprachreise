@@ -22,7 +22,7 @@
       <!-- Top HUD -->
       <header class="top-hud">
         <div class="brand-pill">
-          <span class="brand-icon">✈️</span>
+          <span class="brand-icon" data-icon="airplane" data-size="lg"></span>
           <div>
             <div class="brand-title">Sprachreise</div>
             <div class="brand-sub">Ticket to London · A1 Englisch</div>
@@ -33,27 +33,27 @@
 
         <div class="hud-actions">
           <div class="stat-pill" title="Gesammelte Sterne">
-            <span>⭐</span>
+            <span data-icon="star" data-size="sm"></span>
             <strong id="stars-count">0</strong>
           </div>
           <button id="btn-quiz" class="hud-btn quiz-pill" title="Vokabel-Quiz starten">
-            🧠 Quiz
+            <span data-icon="quiz" data-size="sm"></span> Quiz
           </button>
           <button id="btn-vocab" class="hud-btn" title="Reise-Wörterbuch öffnen">
-            📖 Wörterbuch <span id="vocab-badge" class="mini-badge">0/30</span>
+            <span data-icon="book" data-size="sm"></span> Wörterbuch <span id="vocab-badge" class="mini-badge">0/30</span>
           </button>
           <button id="btn-passport" class="hud-btn" title="Reisepass & Stempel ansehen">
-            🛂 Reisepass <span id="stamp-badge" class="mini-badge">0/5</span>
+            <span data-icon="passport" data-size="sm"></span> Reisepass <span id="stamp-badge" class="mini-badge">0/5</span>
           </button>
-          <button id="btn-time" class="hud-btn icon-only" title="Tageszeit wechseln (Tag / Abend / Nacht)">☀️</button>
-          <button id="btn-mute" class="hud-btn icon-only" title="Ton an/aus">🔊</button>
+          <button id="btn-time" class="hud-btn icon-only" title="Tageszeit wechseln (Tag / Abend / Nacht)"></button>
+          <button id="btn-mute" class="hud-btn icon-only" title="Ton an/aus"></button>
         </div>
       </header>
 
       <!-- Station Info Banner (Left) -->
       <aside class="station-banner" id="station-banner">
         <div class="banner-top">
-          <span id="station-step-tag" class="step-tag">Station 1 von 4</span>
+          <span id="station-step-tag" class="step-tag">Station 1 von 5</span>
           <span id="station-stamp-pill" class="stamp-pill hidden">✓ Stempel erhalten</span>
         </div>
         <h1 id="station-title">Airport</h1>
@@ -65,21 +65,25 @@
         </div>
 
         <div class="banner-controls">
-          <button id="btn-start-mission" class="primary-btn">🎯 Aufgaben starten</button>
-          <button id="btn-reset-cam" class="ghost-btn" title="Kamera zurücksetzen">🎥 Ansicht</button>
+          <button id="btn-start-mission" class="primary-btn"></button>
+          <button id="btn-reset-cam" class="ghost-btn" title="Kamera zurücksetzen">
+            <span data-icon="cam_view" data-size="sm"></span> Ansicht
+          </button>
         </div>
-        <div class="controls-hint">🖱️ Ziehen = Drehen · Scrollen = Zoom · Klick = Entdecken</div>
+        <div class="controls-hint">Ziehen = Drehen · Scrollen = Zoom · Klick = Entdecken</div>
       </aside>
 
       <!-- Discovery Card (Bottom-Center when clicking a 3D Sand3D Object) -->
       <section id="vocab-card" class="vocab-card hidden" aria-live="polite">
         <button id="vocab-card-close" class="card-close" aria-label="Schließen">✕</button>
         <div class="vocab-card-header">
-          <span id="vocab-emoji" class="vocab-emoji">🧳</span>
+          <span id="vocab-emoji" class="vocab-emoji"></span>
           <div class="vocab-words">
             <div class="vocab-en-row">
               <h2 id="vocab-en">Suitcase</h2>
-              <button id="vocab-speak-word" class="speak-btn" title="Englisch anhören">🔊</button>
+              <button id="vocab-speak-word" class="speak-btn" title="Englisch anhören">
+                <span data-icon="speaker" data-size="sm"></span>
+              </button>
             </div>
             <div class="vocab-meta">
               <span id="vocab-phonetic" class="phonetic">/ˈsuːt.keɪs/</span>
@@ -91,14 +95,16 @@
         </div>
         <div class="vocab-example">
           <div class="example-en-row">
-            <p id="vocab-example-en">My suitcase is blue and heavy.</p>
-            <button id="vocab-speak-sentence" class="speak-btn small" title="Satz anhören">🔊 Satz</button>
+            <p id="vocab-example-en">My suitcase is blue and ready to go.</p>
+            <button id="vocab-speak-sentence" class="speak-btn small" title="Satz anhören">
+              <span data-icon="speaker" data-size="xs"></span> Satz
+            </button>
           </div>
-          <p id="vocab-example-de" class="example-de">Mein Koffer ist blau und schwer.</p>
+          <p id="vocab-example-de" class="example-de">Mein Koffer ist blau und bereit für die Reise.</p>
         </div>
       </section>
 
-      <!-- Interactive Mission Panel (Bottom-Right / Bottom-Center during Missions) -->
+      <!-- Interactive Mission Panel -->
       <section id="mission-panel" class="mission-panel hidden" aria-live="polite">
         <div class="mission-header">
           <div>
@@ -116,7 +122,7 @@
       <!-- Loading Overlay -->
       <div id="loading-overlay" class="loading-overlay">
         <div class="loading-card">
-          <div class="loading-plane">✈️</div>
+          <div class="loading-plane" data-icon="airplane" data-size="xl"></div>
           <h2>Sprachreise wird geladen…</h2>
           <p id="loading-status">3D-Modelle (Sand3D) werden vorbereitet…</p>
           <div class="loading-bar-track">
@@ -128,7 +134,9 @@
       <!-- Welcome Modal -->
       <div id="welcome-modal" class="modal-backdrop hidden">
         <div class="modal-card welcome-card">
-          <div class="welcome-badge">🌍 3D-Lernspiel · Three.js + Sand3D</div>
+          <div class="welcome-badge">
+            <span data-icon="globe" data-size="xs"></span> 3D-Lernspiel · Three.js + Sand3D
+          </div>
           <h1>Willkommen bei <span>Sprachreise</span>!</h1>
           <p class="welcome-lead">
             Begib dich auf eine kleine Reise nach <strong>London</strong> und lerne spielerisch
@@ -136,28 +144,30 @@
           </p>
           <div class="welcome-steps">
             <div class="w-step">
-              <span>🔍</span>
+              <span data-icon="search" data-size="lg"></span>
               <div>
                 <strong>1. Entdecken</strong>
                 <p>Klicke 3D-Objekte in jeder Station an und höre dir die englische Aussprache an.</p>
               </div>
             </div>
             <div class="w-step">
-              <span>💬</span>
+              <span data-icon="chat" data-size="lg"></span>
               <div>
                 <strong>2. Aufgaben lösen</strong>
                 <p>Meistere Suchspiele, kurze Reise-Dialoge und einfache englische Sätze.</p>
               </div>
             </div>
             <div class="w-step">
-              <span>🛂</span>
+              <span data-icon="passport" data-size="lg"></span>
               <div>
                 <strong>3. Stempel sammeln</strong>
                 <p>Hol dir alle 5 Reisepass-Stempel vom Flughafen über Bahnhof, Hotel & Café bis zum London Square!</p>
               </div>
             </div>
           </div>
-          <button id="btn-begin-journey" class="primary-btn large">Reise starten ✈️</button>
+          <button id="btn-begin-journey" class="primary-btn large">
+            Reise starten <span data-icon="airplane" data-size="sm"></span>
+          </button>
           <p class="credits-note">
             Entwickelt von <strong>Jens Andreas Bröcher · MatchNetworks UG (haftungsbeschränkt)</strong> · Lizenz: CC BY-NC-SA 4.0 (Non-Commercial)
           </p>
@@ -168,7 +178,7 @@
       <div id="vocab-modal" class="modal-backdrop hidden">
         <div class="modal-card wide-modal">
           <div class="modal-header">
-            <h2>📖 Dein Reise-Wörterbuch</h2>
+            <h2 class="title-with-icon"><span data-icon="book" data-size="lg"></span> Dein Reise-Wörterbuch</h2>
             <button id="close-vocab-modal" class="card-close">✕</button>
           </div>
           <p class="modal-sub">Klicke auf das Lautsprecher-Symbol, um dir ein Wort vorlesen zu lassen.</p>
@@ -180,16 +190,17 @@
       <div id="passport-modal" class="modal-backdrop hidden">
         <div class="modal-card passport-card">
           <div class="modal-header">
-            <h2>🛂 Dein Sprachreise-Pass</h2>
+            <h2 class="title-with-icon"><span data-icon="passport" data-size="lg"></span> Dein Sprachreise-Pass</h2>
             <button id="close-passport-modal" class="card-close">✕</button>
           </div>
           <p class="modal-sub">Löse alle Aufgaben einer Station, um den offiziellen Reisestempel zu erhalten.</p>
           <div id="passport-stamps" class="passport-grid"></div>
           <div id="passport-celebration" class="celebration-box hidden">
-            🎉 <strong>Fantastisch!</strong> Du hast alle 5 Stationen abgeschlossen und deine Sprachreise nach London gemeistert!
+            <span data-icon="trophy" data-size="md"></span>
+            <strong>Fantastisch!</strong> Du hast alle 5 Stationen abgeschlossen und deine Sprachreise nach London gemeistert!
           </div>
           <div class="passport-footer">
-            <span id="best-streak-label" class="streak-note">🔥 Beste Quiz-Serie: 0</span>
+            <span id="best-streak-label" class="streak-note"></span>
             <button id="btn-reset-progress" class="ghost-btn small-btn">↺ Fortschritt zurücksetzen</button>
           </div>
         </div>
@@ -199,13 +210,13 @@
       <div id="quiz-modal" class="modal-backdrop hidden">
         <div class="modal-card quiz-card">
           <div class="modal-header">
-            <h2>🧠 Reise-Vokabel-Quiz</h2>
+            <h2 class="title-with-icon"><span data-icon="quiz" data-size="lg"></span> Reise-Vokabel-Quiz</h2>
             <button id="close-quiz-modal" class="card-close">✕</button>
           </div>
           <div class="quiz-topbar">
             <span id="quiz-counter" class="step-tag">Frage 1 / 8</span>
-            <span id="quiz-streak" class="streak-pill">🔥 Serie: 0</span>
-            <span id="quiz-score" class="score-pill">⭐ +0</span>
+            <span id="quiz-streak" class="streak-pill"></span>
+            <span id="quiz-score" class="score-pill"></span>
           </div>
           <div id="quiz-stage" class="quiz-stage"></div>
         </div>
@@ -213,7 +224,7 @@
 
       <!-- Barnaby the Owl Tip Toast -->
       <div id="owl-toast" class="owl-toast hidden" aria-live="polite">
-        <div class="owl-avatar">🦉</div>
+        <div class="owl-avatar" data-icon="owl" data-size="lg"></div>
         <div class="owl-content">
           <div class="owl-name">Barnaby · Dein London-Reiseführer</div>
           <div id="owl-en" class="owl-en">Hello traveller! Click any glowing object!</div>
@@ -224,16 +235,16 @@
 
       <!-- Travel Postcard Transition Overlay -->
       <div id="travel-banner" class="travel-banner hidden">
-        <span id="travel-icon" class="travel-icon">✈️</span>
-        <span id="travel-text">Reise geht weiter nach Bahnhof…</span>
+        <span id="travel-icon" class="travel-icon"></span>
+        <span id="travel-text">Reise geht weiter…</span>
       </div>
 
       <!-- Stamp Earned Toast -->
       <div id="stamp-toast" class="stamp-toast hidden">
-        <div class="stamp-seal" id="toast-stamp-icon">✈️</div>
+        <div class="stamp-seal" id="toast-stamp-icon"></div>
         <div>
           <strong id="toast-stamp-title">Stempel erhalten!</strong>
-          <p id="toast-stamp-sub">Airport abgeschlossen — nächste Station freigeschaltet!</p>
+          <p id="toast-stamp-sub">Station abgeschlossen — nächste Station freigeschaltet!</p>
         </div>
         <button id="toast-next-btn" class="primary-btn small">Weiter →</button>
       </div>
