@@ -33,3 +33,11 @@ Danach im Browser öffnen: `http://localhost:5173`
 npm run assets
 ```
 (oder direkt: `.venv\Scripts\python.exe assets_src/build_assets.py`)
+
+## 👨‍💻 Autor & Lizenz
+
+Entwickelt von **Jens Andreas Bröcher — MatchNetworks UG (haftungsbeschränkt)**.
+
+Dieses Projekt steht unter der **Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)** Lizenz (siehe [LICENSE](./LICENSE)).  
+**Nicht-kommerzielle Nutzung** (Teilen, Lernen, Weiterentwickeln) ist unter Namensnennung ausdrücklich erlaubt; eine kommerzielle Nutzung bedarf der vorherigen Zustimmung der MatchNetworks UG (haftungsbeschränkt).
+

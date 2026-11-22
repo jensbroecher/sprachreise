@@ -3,6 +3,8 @@
   "private": true,
   "version": "1.0.0",
   "description": "3D Edutainment English Learning Travel Game built with Three.js & Sand3D",
+  "author": "Jens Andreas Bröcher — MatchNetworks UG (haftungsbeschränkt)",
+  "license": "CC-BY-NC-SA-4.0",
   "type": "module",
   "scripts": {
     "dev": "vite",

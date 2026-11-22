@@ -927,6 +927,13 @@ body,
   line-height: 1.5;
 }
 
+.credits-note {
+  margin-top: 16px;
+  font-size: 0.76rem;
+  color: #64748b;
+  line-height: 1.4;
+}
+
 .welcome-steps {
   display: flex;
   flex-direction: column;

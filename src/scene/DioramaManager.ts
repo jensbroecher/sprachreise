@@ -266,7 +266,7 @@ export class DioramaManager {
     await Promise.all(
       uniqueFiles.map(async ({ file, label }) => {
         try {
-          const gltf = await this.loader.loadAsync(`/models/${file}`);
+          const gltf = await this.loader.loadAsync(`${import.meta.env.BASE_URL}models/${file}`);
           const root = gltf.scene;
           root.traverse((obj) => {
             if ((obj as THREE.Mesh).isMesh) {
