@@ -1103,6 +1103,149 @@ def build_park_tree():
     return s3d.assembly("park_tree", *parts)
 
 
+def build_hot_air_balloon():
+    parts = []
+    # Woven wicker basket
+    basket = s3d.extrude("hab_basket", s3d.rect(190, 190, r=24), 155)
+    s3d.material(basket, "oak", color="#b45309")
+    parts.append(basket)
+
+    basket_rim = s3d.extrude("hab_rim", s3d.rect(210, 210, r=26), 28)
+    s3d.at(basket_rim, z=142)
+    s3d.material(basket_rim, "leather", color="#78350f")
+    parts.append(basket_rim)
+
+    # 4 brass suspension ropes
+    for idx, (rx, ry) in enumerate(((-72, -72), (72, -72), (-72, 72), (72, 72))):
+        rope = s3d.cylinder(f"hab_rope_{idx}", 12, 165)
+        s3d.at(rope, x=rx, y=ry, z=160)
+        s3d.material(rope, "brass")
+        parts.append(rope)
+
+    # Glowing burner flame above basket!
+    flame = s3d.sphere("hab_flame", 72)
+    s3d.at(flame, z=255)
+    s3d.material(flame, "light", color="#fb923c", emission=3.8)
+    parts.append(flame)
+
+    # Lower skirt cone of balloon envelope
+    skirt = s3d.cone("hab_skirt", 205, 220, d2=460)
+    s3d.at(skirt, z=305)
+    s3d.material(skirt, "fabric", color="#f59e0b")
+    parts.append(skirt)
+
+    # Big vibrant main balloon envelope sphere
+    envelope = s3d.sphere("hab_env", 540)
+    s3d.at(envelope, z=395)
+    s3d.material(envelope, "fabric", color="#ef4444")
+    parts.append(envelope)
+
+    # Colorful horizontal decorative bands around envelope
+    band1 = s3d.torus("hab_band1", 536, 46)
+    s3d.at(band1, z=665)
+    s3d.material(band1, "fabric", color="#fef08a")
+    parts.append(band1)
+
+    band2 = s3d.torus("hab_band2", 470, 42)
+    s3d.at(band2, z=780)
+    s3d.material(band2, "fabric", color="#0ea5e9")
+    parts.append(band2)
+
+    band3 = s3d.torus("hab_band3", 470, 42)
+    s3d.at(band3, z=545)
+    s3d.material(band3, "fabric", color="#10b981")
+    parts.append(band3)
+
+    crown = s3d.dome("hab_crown", 210, 56)
+    s3d.at(crown, z=910)
+    s3d.material(crown, "fabric", color="#2563eb")
+    parts.append(crown)
+
+    return s3d.assembly("hot_air_balloon", *parts)
+
+
+def build_travel_owl():
+    parts = []
+    # Cute little orange owl feet
+    for side, fx in (("L", -68), ("R", 68)):
+        foot = s3d.extrude(f"owl_foot_{side}", s3d.rect(68, 92, r=24), 26)
+        s3d.at(foot, x=fx, y=-18)
+        s3d.material(foot, "plastic", color="#f97316")
+        parts.append(foot)
+
+    # Plump royal-blue owl body
+    body = s3d.sphere("owl_body", 310)
+    s3d.at(body, z=20)
+    s3d.material(body, "fabric", color="#2563eb")
+    parts.append(body)
+
+    # Cream belly patch (-Y)
+    belly = s3d.sphere("owl_belly", 225)
+    s3d.at(belly, y=-62, z=45)
+    s3d.material(belly, "fabric", color="#fef3c7")
+    parts.append(belly)
+
+    # Cute tucked wings
+    for side, sgn in (("L", -1), ("R", 1)):
+        wing = s3d.extrude(f"owl_wing_{side}", s3d.rect(62, 175, r=26), 195)
+        s3d.at(wing, x=sgn * 145, y=10, z=95, ry=sgn * -14)
+        s3d.material(wing, "fabric", color="#1d4ed8")
+        parts.append(wing)
+
+    # Big expressive owl eyes + brass spectacles!
+    for side, ex in (("L", -62), ("R", 62)):
+        eye_w = s3d.sphere(f"eye_w_{side}", 96)
+        s3d.at(eye_w, x=ex, y=-118, z=205)
+        s3d.material(eye_w, "glossy_plastic", color="#ffffff")
+        parts.append(eye_w)
+
+        pupil = s3d.sphere(f"pupil_{side}", 46)
+        s3d.at(pupil, x=ex, y=-156, z=230)
+        s3d.material(pupil, "glossy_plastic", color="#0f172a")
+        parts.append(pupil)
+
+        spec = s3d.torus(f"spec_{side}", 104, 12)
+        s3d.at(spec, x=ex, y=-155, z=252, rx=90)
+        s3d.material(spec, "brass", color="#f59e0b")
+        parts.append(spec)
+
+    # Golden beak
+    beak = s3d.cone("owl_beak", 56, 68, d2=8)
+    s3d.at(beak, y=-148, z=215, rx=105)
+    s3d.material(beak, "plastic", color="#f59e0b")
+    parts.append(beak)
+
+    # Dapper red bow tie!
+    for side, sgn in (("L", -1), ("R", 1)):
+        bow = s3d.cone(f"bow_{side}", 54, 62, d2=12)
+        s3d.at(bow, x=sgn * 48, y=-156, z=155, ry=sgn * -90)
+        s3d.material(bow, "fabric", color="#dc2626")
+        parts.append(bow)
+
+    bow_c = s3d.sphere("bow_center", 32)
+    s3d.at(bow_c, y=-162, z=140)
+    s3d.material(bow_c, "fabric", color="#b91c1c")
+    parts.append(bow_c)
+
+    # Classic British black bowler hat on top!
+    brim = s3d.cylinder("hat_brim", 230, 22)
+    s3d.at(brim, z=315)
+    s3d.material(brim, "velvet", color="#1e293b")
+    parts.append(brim)
+
+    hat_band = s3d.cylinder("hat_band", 168, 28)
+    s3d.at(hat_band, z=336)
+    s3d.material(hat_band, "fabric", color="#dc2626")
+    parts.append(hat_band)
+
+    hat_dome = s3d.dome("hat_dome", 164, 95)
+    s3d.at(hat_dome, z=356)
+    s3d.material(hat_dome, "velvet", color="#1e293b")
+    parts.append(hat_dome)
+
+    return s3d.assembly("travel_owl", *parts)
+
+
 EXTRA_MODELS = [
     # Station 1 Airport extra vocab + scenery
     ("backpack.glb", build_backpack),
@@ -1133,4 +1276,7 @@ EXTRA_MODELS = [
     ("bicycle.glb", build_bicycle),
     ("park_fountain.glb", build_park_fountain),
     ("park_tree.glb", build_park_tree),
+    # Animated Sky & Travel Companion Models
+    ("hot_air_balloon.glb", build_hot_air_balloon),
+    ("travel_owl.glb", build_travel_owl),
 ]

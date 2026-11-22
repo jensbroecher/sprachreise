@@ -136,16 +136,17 @@ body,
 .station-tab {
   border: none;
   background: transparent;
-  padding: 8px 14px;
+  padding: 7px 11px;
   border-radius: var(--radius-pill);
   font-family: var(--font-body);
   font-weight: 800;
-  font-size: 0.88rem;
+  font-size: 0.84rem;
   color: var(--text-muted);
   cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
+  white-space: nowrap;
   transition: all 0.2s ease;
 }
 
@@ -179,22 +180,23 @@ body,
 .hud-actions {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 
 .stat-pill,
 .hud-btn {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
   background: var(--glass-bg);
   border: 1.5px solid var(--glass-border);
   backdrop-filter: blur(14px);
-  padding: 9px 14px;
+  padding: 7px 11px;
   border-radius: var(--radius-pill);
   font-family: var(--font-body);
   font-weight: 800;
-  font-size: 0.88rem;
+  font-size: 0.84rem;
+  white-space: nowrap;
   color: var(--text-main);
   box-shadow: var(--glass-shadow);
 }
@@ -210,7 +212,7 @@ body,
 }
 
 .hud-btn.icon-only {
-  padding: 9px 12px;
+  padding: 7px 10px;
 }
 
 .mini-badge {
@@ -1097,6 +1099,234 @@ body,
 .stamp-toast p {
   font-size: 0.84rem;
   color: var(--text-muted);
+}
+
+/* Quiz Button & Modal */
+.quiz-pill {
+  background: linear-gradient(135deg, #fef3c7, #fde68a);
+  border-color: #fbbf24;
+  color: #92400e;
+}
+
+.quiz-pill:hover {
+  background: linear-gradient(135deg, #fde68a, #fcd34d);
+}
+
+.quiz-topbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.streak-pill,
+.score-pill {
+  font-size: 0.8rem;
+  font-weight: 800;
+  padding: 4px 11px;
+  border-radius: var(--radius-pill);
+}
+
+.streak-pill {
+  background: #ffedd5;
+  color: #c2410c;
+}
+
+.score-pill {
+  background: #fef9c3;
+  color: #a16207;
+  margin-left: auto;
+}
+
+.quiz-question-box {
+  background: linear-gradient(135deg, #eff6ff, #f5f3ff);
+  border: 1.5px solid #c7d2fe;
+  border-radius: 18px;
+  padding: 18px;
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.quiz-mode-label {
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #6366f1;
+  margin-bottom: 6px;
+}
+
+.quiz-prompt-big {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  color: var(--text-main);
+  margin-bottom: 8px;
+}
+
+.quiz-options-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.quiz-opt-btn {
+  border: 1.5px solid #cbd5e1;
+  background: #fff;
+  border-radius: 15px;
+  padding: 13px 14px;
+  font-family: var(--font-body);
+  font-weight: 800;
+  font-size: 0.96rem;
+  color: var(--text-main);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.15s ease;
+}
+
+.quiz-opt-btn:hover {
+  border-color: var(--accent);
+  background: #eff6ff;
+  transform: translateY(-1px);
+}
+
+.quiz-opt-btn.correct {
+  border-color: #10b981;
+  background: #dcfce7;
+  color: #065f46;
+}
+
+.quiz-opt-btn.wrong {
+  border-color: #ef4444;
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.quiz-summary {
+  text-align: center;
+  padding: 12px 6px;
+}
+
+.quiz-summary-emoji {
+  font-size: 3rem;
+  margin-bottom: 8px;
+}
+
+.quiz-summary h3 {
+  font-family: var(--font-display);
+  font-size: 1.55rem;
+  margin-bottom: 6px;
+}
+
+.quiz-summary p {
+  color: var(--text-muted);
+  margin-bottom: 18px;
+}
+
+/* Barnaby Owl Toast */
+.owl-toast {
+  position: fixed;
+  bottom: 22px;
+  right: 22px;
+  z-index: 26;
+  width: min(410px, calc(100vw - 32px));
+  background: rgba(255, 255, 255, 0.96);
+  border: 2px solid #93c5fd;
+  backdrop-filter: blur(16px);
+  border-radius: 20px;
+  padding: 14px 16px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.22);
+  animation: popUp 0.28s ease;
+}
+
+.owl-avatar {
+  font-size: 2rem;
+  line-height: 1;
+  background: #dbeafe;
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.owl-content {
+  flex: 1;
+}
+
+.owl-name {
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: #2563eb;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 3px;
+}
+
+.owl-en {
+  font-weight: 800;
+  font-size: 0.98rem;
+  color: var(--text-main);
+}
+
+.owl-de {
+  font-size: 0.84rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+/* Travel Transition Pill */
+.travel-banner {
+  position: fixed;
+  top: 88px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 35;
+  background: rgba(15, 23, 42, 0.88);
+  color: #fff;
+  backdrop-filter: blur(12px);
+  padding: 10px 22px;
+  border-radius: var(--radius-pill);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.28);
+  animation: fadeSlideIn 0.25s ease;
+}
+
+.travel-icon {
+  font-size: 1.3rem;
+}
+
+/* Passport Footer */
+.passport-footer {
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.streak-note {
+  font-weight: 800;
+  font-size: 0.9rem;
+  color: #c2410c;
+}
+
+.small-btn {
+  padding: 7px 12px;
+  font-size: 0.82rem;
 }
 
 @keyframes fadeSlideIn {

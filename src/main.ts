@@ -1,13 +1,25 @@
 import './styles.css';
 import { STATIONS, StationData, VocabItem, StationTask } from './data/stations';
-import { DioramaManager } from './scene/DioramaManager';
+import { DioramaManager, TimeOfDay } from './scene/DioramaManager';
 import { sound } from './audio';
+
+const STORAGE_KEY = 'sprachreise_save_v1';
+
+interface SavedProgress {
+  stars: number;
+  discoveredIds: string[];
+  completedStations: string[];
+  bestQuizStreak: number;
+  timeOfDay: TimeOfDay;
+}
 
 interface GameState {
   stationIndex: number;
   stars: number;
   discoveredIds: Set<string>;
   completedStations: Set<string>;
+  bestQuizStreak: number;
+  timeOfDay: TimeOfDay;
   missionActive: boolean;
   taskIndex: number;
   taskSolved: boolean;
@@ -19,11 +31,58 @@ const state: GameState = {
   stars: 0,
   discoveredIds: new Set<string>(),
   completedStations: new Set<string>(),
+  bestQuizStreak: 0,
+  timeOfDay: 'day',
   missionActive: false,
   taskIndex: 0,
   taskSolved: false,
   sentenceSelection: []
 };
+
+function loadProgress(): void {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return;
+    const data = JSON.parse(raw) as Partial<SavedProgress>;
+    if (typeof data.stars === 'number') state.stars = data.stars;
+    if (Array.isArray(data.discoveredIds)) state.discoveredIds = new Set(data.discoveredIds);
+    if (Array.isArray(data.completedStations)) state.completedStations = new Set(data.completedStations);
+    if (typeof data.bestQuizStreak === 'number') state.bestQuizStreak = data.bestQuizStreak;
+    if (data.timeOfDay === 'day' || data.timeOfDay === 'sunset' || data.timeOfDay === 'night') {
+      state.timeOfDay = data.timeOfDay;
+    }
+  } catch {
+    // ignore corrupted localStorage
+  }
+}
+
+function saveProgress(): void {
+  try {
+    const payload: SavedProgress = {
+      stars: state.stars,
+      discoveredIds: Array.from(state.discoveredIds),
+      completedStations: Array.from(state.completedStations),
+      bestQuizStreak: state.bestQuizStreak,
+      timeOfDay: state.timeOfDay
+    };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+  } catch {
+    // ignore quota errors
+  }
+}
+
+loadProgress();
+
+// Barnaby the Travel Owl Tips
+const OWL_TIPS: { en: string; de: string }[] = [
+  { en: 'Hello traveller! Click any glowing ring to learn a new English word.', de: 'Hallo Reisender! Klicke einen leuchtenden Ring an, um ein neues englisches Wort zu lernen.' },
+  { en: 'Try switching to Night mode with the sun button in the top right!', de: 'Probier mal den Nachtmodus mit dem Sonnen-Button oben rechts aus!' },
+  { en: 'Practice makes perfect! Try the Vocabulary Quiz to earn extra stars.', de: 'Übung macht den Meister! Starte das Vokabel-Quiz für Extra-Sterne.' },
+  { en: 'In England, people always say please and thank you!', de: 'In England sagt man fast immer „please“ (bitte) und „thank you“ (danke)!' },
+  { en: 'Can you collect all five passport stamps on your journey to London?', de: 'Schaffst du alle 5 Reisepass-Stempel auf deiner Reise nach London?' },
+  { en: 'Great job! Click the speaker button to hear British English pronunciation.', de: 'Super gemacht! Klicke auf das Lautsprecher-Symbol für die britische Aussprache.' }
+];
+let owlTipIdx = 0;
 
 // DOM References
 const canvas = document.getElementById('scene-canvas') as HTMLCanvasElement;
@@ -33,6 +92,8 @@ const starsCountEl = document.getElementById('stars-count') as HTMLElement;
 const vocabBadgeEl = document.getElementById('vocab-badge') as HTMLElement;
 const stampBadgeEl = document.getElementById('stamp-badge') as HTMLElement;
 const btnMute = document.getElementById('btn-mute') as HTMLButtonElement;
+const btnTime = document.getElementById('btn-time') as HTMLButtonElement;
+const btnQuiz = document.getElementById('btn-quiz') as HTMLButtonElement;
 
 const stationStepTag = document.getElementById('station-step-tag') as HTMLElement;
 const stationStampPill = document.getElementById('station-stamp-pill') as HTMLElement;
@@ -76,8 +137,26 @@ const closeVocabModal = document.getElementById('close-vocab-modal') as HTMLButt
 const passportModal = document.getElementById('passport-modal') as HTMLElement;
 const passportStampsEl = document.getElementById('passport-stamps') as HTMLElement;
 const passportCelebration = document.getElementById('passport-celebration') as HTMLElement;
+const bestStreakLabel = document.getElementById('best-streak-label') as HTMLElement;
+const btnResetProgress = document.getElementById('btn-reset-progress') as HTMLButtonElement;
 const btnPassport = document.getElementById('btn-passport') as HTMLButtonElement;
 const closePassportModal = document.getElementById('close-passport-modal') as HTMLButtonElement;
+
+const quizModal = document.getElementById('quiz-modal') as HTMLElement;
+const closeQuizModal = document.getElementById('close-quiz-modal') as HTMLButtonElement;
+const quizCounterEl = document.getElementById('quiz-counter') as HTMLElement;
+const quizStreakEl = document.getElementById('quiz-streak') as HTMLElement;
+const quizScoreEl = document.getElementById('quiz-score') as HTMLElement;
+const quizStageEl = document.getElementById('quiz-stage') as HTMLElement;
+
+const owlToast = document.getElementById('owl-toast') as HTMLElement;
+const owlEnEl = document.getElementById('owl-en') as HTMLElement;
+const owlDeEl = document.getElementById('owl-de') as HTMLElement;
+const owlClose = document.getElementById('owl-close') as HTMLButtonElement;
+
+const travelBanner = document.getElementById('travel-banner') as HTMLElement;
+const travelIcon = document.getElementById('travel-icon') as HTMLElement;
+const travelText = document.getElementById('travel-text') as HTMLElement;
 
 const stampToast = document.getElementById('stamp-toast') as HTMLElement;
 const toastStampIcon = document.getElementById('toast-stamp-icon') as HTMLElement;
@@ -86,7 +165,14 @@ const toastStampSub = document.getElementById('toast-stamp-sub') as HTMLElement;
 const toastNextBtn = document.getElementById('toast-next-btn') as HTMLButtonElement;
 
 let activeVocabItem: VocabItem | null = null;
+let travelBannerTimer: number | null = null;
+let owlTimer: number | null = null;
+
 const diorama = new DioramaManager(canvas);
+
+function allVocabItems(): VocabItem[] {
+  return STATIONS.flatMap((s) => s.items);
+}
 
 function currentStation(): StationData {
   return STATIONS[state.stationIndex];
@@ -96,12 +182,25 @@ function totalVocabCount(): number {
   return STATIONS.reduce((sum, s) => sum + s.items.length, 0);
 }
 
+function updateTimeButton(): void {
+  const icons: Record<TimeOfDay, string> = { day: '☀️', sunset: '🌇', night: '🌙' };
+  const labels: Record<TimeOfDay, string> = {
+    day: 'Tageszeit: Tag (klicken für Sonnenuntergang)',
+    sunset: 'Tageszeit: Abendrot (klicken für Nacht)',
+    night: 'Tageszeit: Sternennacht (klicken für Tag)'
+  };
+  btnTime.textContent = icons[state.timeOfDay];
+  btnTime.title = labels[state.timeOfDay];
+}
+
 function updateHud(): void {
   starsCountEl.textContent = String(state.stars);
   vocabBadgeEl.textContent = `${state.discoveredIds.size}/${totalVocabCount()}`;
   stampBadgeEl.textContent = `${state.completedStations.size}/${STATIONS.length}`;
+  updateTimeButton();
   renderStationTabs();
   renderStationBanner();
+  saveProgress();
 }
 
 function renderStationTabs(): void {
@@ -149,6 +248,16 @@ function renderStationBanner(): void {
   });
 }
 
+function showTravelBanner(st: StationData): void {
+  if (travelBannerTimer) window.clearTimeout(travelBannerTimer);
+  travelIcon.textContent = st.icon;
+  travelText.textContent = `Willkommen: ${st.nameEn} (${st.nameDe})`;
+  travelBanner.classList.remove('hidden');
+  travelBannerTimer = window.setTimeout(() => {
+    travelBanner.classList.add('hidden');
+  }, 1900);
+}
+
 function switchStation(idx: number): void {
   state.stationIndex = idx;
   state.missionActive = false;
@@ -157,13 +266,17 @@ function switchStation(idx: number): void {
   missionPanel.classList.add('hidden');
   vocabCard.classList.add('hidden');
   stampToast.classList.add('hidden');
+  owlToast.classList.add('hidden');
 
-  diorama.loadStation(currentStation(), state.discoveredIds);
+  const st = currentStation();
+  diorama.loadStation(st, state.discoveredIds);
+  showTravelBanner(st);
   updateHud();
 }
 
 function openVocabCard(item: VocabItem, isNew: boolean): void {
   activeVocabItem = item;
+  owlToast.classList.add('hidden');
   vocabEmoji.textContent = item.emoji;
   vocabEn.textContent = item.en;
   vocabPhonetic.textContent = item.phonetic;
@@ -192,6 +305,7 @@ function handleItemClick(item: VocabItem): void {
       if (item.id === task.targetItemId) {
         sound.playSuccess();
         sound.speakEnglish(item.en);
+        diorama.burstConfetti(item.id);
         state.stars += 2;
         state.taskSolved = true;
         updateHud();
@@ -210,6 +324,7 @@ function handleItemClick(item: VocabItem): void {
     state.discoveredIds.add(item.id);
     state.stars += 1;
     diorama.markDiscovered(item.id);
+    diorama.burstConfetti(item.id);
     sound.playDiscover();
     updateHud();
   } else {
@@ -220,11 +335,27 @@ function handleItemClick(item: VocabItem): void {
   openVocabCard(item, isNew);
 }
 
+function handleGuideClick(): void {
+  const tip = OWL_TIPS[owlTipIdx % OWL_TIPS.length];
+  owlTipIdx++;
+  sound.playDiscover();
+  sound.speakEnglish(tip.en, 0.94);
+  vocabCard.classList.add('hidden');
+  owlEnEl.textContent = tip.en;
+  owlDeEl.textContent = tip.de;
+  owlToast.classList.remove('hidden');
+  if (owlTimer) window.clearTimeout(owlTimer);
+  owlTimer = window.setTimeout(() => {
+    owlToast.classList.add('hidden');
+  }, 6500);
+}
+
 // Mission Flow
 function startMission(): void {
   sound.playClick();
   vocabCard.classList.add('hidden');
   stampToast.classList.add('hidden');
+  owlToast.classList.add('hidden');
   state.missionActive = true;
   state.taskIndex = 0;
   state.taskSolved = false;
@@ -288,6 +419,7 @@ function renderCurrentTask(): void {
           btn.classList.add('correct');
           sound.playSuccess();
           sound.speakEnglish(opt.en);
+          diorama.burstConfetti();
           state.stars += 2;
           state.taskSolved = true;
           updateHud();
@@ -383,6 +515,7 @@ function renderCurrentTask(): void {
       if (built === task.fullSentenceEn) {
         sound.playSuccess();
         sound.speakEnglish(task.fullSentenceEn);
+        diorama.burstConfetti();
         state.stars += 3;
         state.taskSolved = true;
         updateHud();
@@ -429,6 +562,7 @@ function completeCurrentStation(): void {
   state.missionActive = false;
   missionPanel.classList.add('hidden');
   sound.playStamp();
+  diorama.burstConfetti();
   updateHud();
 
   toastStampIcon.textContent = st.icon;
@@ -436,10 +570,210 @@ function completeCurrentStation(): void {
   const hasNext = state.stationIndex < STATIONS.length - 1;
   toastStampSub.textContent = hasNext
     ? `Auf geht’s zur nächsten Station: ${STATIONS[state.stationIndex + 1].nameDe}!`
-    : 'Du hast alle Stationen abgeschlossen — schau in deinen Reisepass!';
+    : 'Du hast alle 5 Stationen abgeschlossen — schau in deinen Reisepass!';
   toastNextBtn.textContent = hasNext ? 'Nächste Station →' : 'Reisepass öffnen 🛂';
   stampToast.classList.remove('hidden');
 }
+
+// ==============================================================================
+// VOKABEL-QUIZ MINI-GAME (Listen / Translate / Fill-in)
+// ==============================================================================
+
+interface QuizRound {
+  questions: {
+    mode: 'listen' | 'de2en' | 'en2de';
+    target: VocabItem;
+    choices: VocabItem[];
+  }[];
+  index: number;
+  streak: number;
+  earnedStars: number;
+  correctCount: number;
+  answered: boolean;
+}
+
+let activeQuiz: QuizRound | null = null;
+
+function startQuiz(): void {
+  sound.playClick();
+  const all = allVocabItems();
+  const discovered = all.filter((i) => state.discoveredIds.has(i.id));
+  // Prefer discovered words if player has at least 6, otherwise mix all 30 words!
+  const pool = discovered.length >= 6 ? [...discovered, ...all] : [...all];
+  const uniquePicked: VocabItem[] = [];
+  const shuffled = [...all].sort(() => Math.random() - 0.5);
+  const discoveredShuffled = [...discovered].sort(() => Math.random() - 0.5);
+
+  for (const item of [...discoveredShuffled, ...shuffled]) {
+    if (uniquePicked.length >= 8) break;
+    if (!uniquePicked.some((u) => u.id === item.id)) {
+      uniquePicked.push(item);
+    }
+  }
+
+  const modes: ('listen' | 'de2en' | 'en2de')[] = ['listen', 'de2en', 'en2de'];
+  const questions = uniquePicked.map((target, idx) => {
+    const distractors = pool
+      .filter((i) => i.id !== target.id)
+      .filter((v, i, arr) => arr.findIndex((a) => a.id === v.id) === i)
+      .sort(() => Math.random() - 0.5)
+      .slice(0, 3);
+    const choices = [target, ...distractors].sort(() => Math.random() - 0.5);
+    return {
+      mode: modes[idx % modes.length],
+      target,
+      choices
+    };
+  });
+
+  activeQuiz = {
+    questions,
+    index: 0,
+    streak: 0,
+    earnedStars: 0,
+    correctCount: 0,
+    answered: false
+  };
+
+  renderQuizQuestion();
+  quizModal.classList.remove('hidden');
+}
+
+function renderQuizQuestion(): void {
+  if (!activeQuiz) return;
+  const q = activeQuiz.questions[activeQuiz.index];
+  activeQuiz.answered = false;
+
+  quizCounterEl.textContent = `Frage ${activeQuiz.index + 1} / ${activeQuiz.questions.length}`;
+  quizStreakEl.textContent = `🔥 Serie: ${activeQuiz.streak}`;
+  quizScoreEl.textContent = `⭐ +${activeQuiz.earnedStars}`;
+
+  const modeMeta = {
+    listen: {
+      badge: '🔊 Hör-Verstehen',
+      prompt: 'Welches Wort hörst du?',
+      speakText: q.target.en
+    },
+    de2en: {
+      badge: '🇩🇪 → 🇬🇧 Übersetzen',
+      prompt: `${q.target.emoji} ${q.target.de}`,
+      speakText: null
+    },
+    en2de: {
+      badge: '🇬🇧 → 🇩🇪 Bedeutung finden',
+      prompt: `„${q.target.en}“`,
+      speakText: q.target.en
+    }
+  }[q.mode];
+
+  quizStageEl.innerHTML = `
+    <div class="quiz-question-box">
+      <div class="quiz-mode-label">${modeMeta.badge}</div>
+      <div class="quiz-prompt-big">${modeMeta.prompt}</div>
+      ${modeMeta.speakText ? `<button id="quiz-replay-audio" class="speak-btn">🔊 Nochmal anhören</button>` : ''}
+    </div>
+    <div id="quiz-options" class="quiz-options-grid"></div>
+    <div id="quiz-feedback" class="mission-feedback hidden"></div>
+  `;
+
+  if (modeMeta.speakText) {
+    document.getElementById('quiz-replay-audio')?.addEventListener('click', () => {
+      sound.speakEnglish(modeMeta.speakText!);
+    });
+    sound.speakEnglish(modeMeta.speakText);
+  }
+
+  const optGrid = document.getElementById('quiz-options') as HTMLElement;
+  const fbEl = document.getElementById('quiz-feedback') as HTMLElement;
+
+  q.choices.forEach((choice) => {
+    const btn = document.createElement('button');
+    btn.className = 'quiz-opt-btn';
+    btn.innerHTML =
+      q.mode === 'de2en'
+        ? `<span>🇬🇧</span><span>${choice.en}</span>`
+        : `<span>${choice.emoji}</span><span>${choice.de}</span>`;
+
+    btn.addEventListener('click', () => {
+      if (!activeQuiz || activeQuiz.answered) return;
+      activeQuiz.answered = true;
+      const isRight = choice.id === q.target.id;
+
+      if (isRight) {
+        btn.classList.add('correct');
+        sound.playSuccess();
+        sound.speakEnglish(q.target.en);
+        activeQuiz.streak += 1;
+        activeQuiz.correctCount += 1;
+        const bonus = activeQuiz.streak >= 3 ? 2 : 1;
+        activeQuiz.earnedStars += bonus;
+        state.stars += bonus;
+        if (activeQuiz.streak > state.bestQuizStreak) {
+          state.bestQuizStreak = activeQuiz.streak;
+        }
+        updateHud();
+        fbEl.className = 'mission-feedback ok';
+        fbEl.innerHTML = `<span>✅ Richtig! <strong>${q.target.en}</strong> = ${q.target.de}</span>`;
+      } else {
+        btn.classList.add('wrong');
+        sound.playError();
+        activeQuiz.streak = 0;
+        fbEl.className = 'mission-feedback err';
+        fbEl.innerHTML = `<span>💡 Gesucht war <strong>${q.target.en}</strong> (${q.target.de}).</span>`;
+      }
+
+      quizStreakEl.textContent = `🔥 Serie: ${activeQuiz.streak}`;
+      quizScoreEl.textContent = `⭐ +${activeQuiz.earnedStars}`;
+
+      const nextBtn = document.createElement('button');
+      nextBtn.className = 'primary-btn small';
+      const isLast = activeQuiz.index >= activeQuiz.questions.length - 1;
+      nextBtn.textContent = isLast ? 'Ergebnis →' : 'Weiter →';
+      nextBtn.addEventListener('click', () => {
+        if (!activeQuiz) return;
+        sound.playClick();
+        if (isLast) {
+          renderQuizSummary();
+        } else {
+          activeQuiz.index++;
+          renderQuizQuestion();
+        }
+      });
+      fbEl.appendChild(nextBtn);
+    });
+
+    optGrid.appendChild(btn);
+  });
+}
+
+function renderQuizSummary(): void {
+  if (!activeQuiz) return;
+  const { correctCount, questions, earnedStars } = activeQuiz;
+  const pct = Math.round((correctCount / questions.length) * 100);
+  if (pct >= 70) {
+    sound.playStamp();
+    diorama.burstConfetti();
+  }
+  quizStageEl.innerHTML = `
+    <div class="quiz-summary">
+      <div class="quiz-summary-emoji">${pct >= 80 ? '🏆' : pct >= 50 ? '🎉' : '💪'}</div>
+      <h3>${correctCount} von ${questions.length} richtig (${pct}%)!</h3>
+      <p>Du hast <strong>+${earnedStars} Sterne ⭐</strong> gesammelt. Beste Serie bisher: <strong>🔥 ${state.bestQuizStreak}</strong>.</p>
+      <div class="mission-actions-row" style="justify-content:center">
+        <button id="btn-quiz-again" class="primary-btn small">Neue Runde spielen 🔁</button>
+        <button id="btn-quiz-done" class="ghost-btn">Zurück zur 3D-Welt</button>
+      </div>
+    </div>
+  `;
+  document.getElementById('btn-quiz-again')?.addEventListener('click', () => startQuiz());
+  document.getElementById('btn-quiz-done')?.addEventListener('click', () => {
+    quizModal.classList.add('hidden');
+  });
+}
+
+// ==============================================================================
+// MODALS (WÖRTERBUCH & REISEPASS)
+// ==============================================================================
 
 function openVocabNotebook(): void {
   sound.playClick();
@@ -485,11 +819,20 @@ function openPassportModal(): void {
     passportStampsEl.appendChild(slot);
   });
   passportCelebration.classList.toggle('hidden', state.completedStations.size < STATIONS.length);
+  bestStreakLabel.textContent = `🔥 Beste Quiz-Serie: ${state.bestQuizStreak}`;
   passportModal.classList.remove('hidden');
 }
 
 // Wire Diorama Callbacks
 diorama.onItemClick = (item) => handleItemClick(item);
+diorama.onGuideClick = () => handleGuideClick();
+diorama.onGuideHover = (hovering, x, y) => {
+  if (!hovering) return;
+  hoverTooltip.textContent = '🦉 Barnaby — Klick für einen Tipp!';
+  hoverTooltip.style.left = `${x}px`;
+  hoverTooltip.style.top = `${y}px`;
+  hoverTooltip.classList.remove('hidden');
+};
 diorama.onItemHover = (item, x, y) => {
   if (!item) {
     hoverTooltip.classList.add('hidden');
@@ -522,18 +865,47 @@ missionClose.addEventListener('click', () => {
   state.missionActive = false;
   missionPanel.classList.add('hidden');
 });
+owlClose.addEventListener('click', () => owlToast.classList.add('hidden'));
+btnQuiz.addEventListener('click', () => startQuiz());
+closeQuizModal.addEventListener('click', () => quizModal.classList.add('hidden'));
 btnVocab.addEventListener('click', () => openVocabNotebook());
 closeVocabModal.addEventListener('click', () => vocabModal.classList.add('hidden'));
 btnPassport.addEventListener('click', () => openPassportModal());
 closePassportModal.addEventListener('click', () => passportModal.classList.add('hidden'));
+
+btnTime.addEventListener('click', () => {
+  sound.playClick();
+  const order: TimeOfDay[] = ['day', 'sunset', 'night'];
+  const next = order[(order.indexOf(state.timeOfDay) + 1) % order.length];
+  state.timeOfDay = next;
+  diorama.setTimeOfDay(next);
+  updateHud();
+});
+
 btnMute.addEventListener('click', () => {
   sound.muted = !sound.muted;
   btnMute.textContent = sound.muted ? '🔇' : '🔊';
 });
+
 btnBeginJourney.addEventListener('click', () => {
   sound.playDiscover();
   welcomeModal.classList.add('hidden');
 });
+
+btnResetProgress.addEventListener('click', () => {
+  if (!window.confirm('Möchtest du deinen gespeicherten Fortschritt (Sterne, Wörter & Stempel) wirklich zurücksetzen?')) {
+    return;
+  }
+  state.stars = 0;
+  state.discoveredIds.clear();
+  state.completedStations.clear();
+  state.bestQuizStreak = 0;
+  localStorage.removeItem(STORAGE_KEY);
+  passportModal.classList.add('hidden');
+  diorama.loadStation(currentStation(), state.discoveredIds);
+  updateHud();
+});
+
 toastNextBtn.addEventListener('click', () => {
   sound.playClick();
   stampToast.classList.add('hidden');
@@ -545,7 +917,7 @@ toastNextBtn.addEventListener('click', () => {
 });
 
 // Close modals on backdrop click
-[vocabModal, passportModal].forEach((modal) => {
+[vocabModal, passportModal, quizModal].forEach((modal) => {
   modal.addEventListener('click', (e) => {
     if (e.target === modal) modal.classList.add('hidden');
   });
@@ -559,13 +931,16 @@ async function boot(): Promise<void> {
     loadingStatus.textContent = `Lade Sand3D-Modell (${loaded}/${total}): ${label}…`;
   });
 
+  diorama.setTimeOfDay(state.timeOfDay);
   diorama.loadStation(currentStation(), state.discoveredIds);
   updateHud();
 
   loadingOverlay.classList.add('fade-out');
   setTimeout(() => {
     loadingOverlay.classList.add('hidden');
-    welcomeModal.classList.remove('hidden');
+    if (state.discoveredIds.size === 0 && state.completedStations.size === 0) {
+      welcomeModal.classList.remove('hidden');
+    }
   }, 420);
 }
 

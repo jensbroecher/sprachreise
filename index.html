@@ -36,12 +36,16 @@
             <span>⭐</span>
             <strong id="stars-count">0</strong>
           </div>
+          <button id="btn-quiz" class="hud-btn quiz-pill" title="Vokabel-Quiz starten">
+            🧠 Quiz
+          </button>
           <button id="btn-vocab" class="hud-btn" title="Reise-Wörterbuch öffnen">
             📖 Wörterbuch <span id="vocab-badge" class="mini-badge">0/30</span>
           </button>
           <button id="btn-passport" class="hud-btn" title="Reisepass & Stempel ansehen">
             🛂 Reisepass <span id="stamp-badge" class="mini-badge">0/5</span>
           </button>
+          <button id="btn-time" class="hud-btn icon-only" title="Tageszeit wechseln (Tag / Abend / Nacht)">☀️</button>
           <button id="btn-mute" class="hud-btn icon-only" title="Ton an/aus">🔊</button>
         </div>
       </header>
@@ -181,7 +185,44 @@
           <div id="passport-celebration" class="celebration-box hidden">
             🎉 <strong>Fantastisch!</strong> Du hast alle 5 Stationen abgeschlossen und deine Sprachreise nach London gemeistert!
           </div>
+          <div class="passport-footer">
+            <span id="best-streak-label" class="streak-note">🔥 Beste Quiz-Serie: 0</span>
+            <button id="btn-reset-progress" class="ghost-btn small-btn">↺ Fortschritt zurücksetzen</button>
+          </div>
         </div>
+      </div>
+
+      <!-- Vokabel-Quiz Modal -->
+      <div id="quiz-modal" class="modal-backdrop hidden">
+        <div class="modal-card quiz-card">
+          <div class="modal-header">
+            <h2>🧠 Reise-Vokabel-Quiz</h2>
+            <button id="close-quiz-modal" class="card-close">✕</button>
+          </div>
+          <div class="quiz-topbar">
+            <span id="quiz-counter" class="step-tag">Frage 1 / 8</span>
+            <span id="quiz-streak" class="streak-pill">🔥 Serie: 0</span>
+            <span id="quiz-score" class="score-pill">⭐ +0</span>
+          </div>
+          <div id="quiz-stage" class="quiz-stage"></div>
+        </div>
+      </div>
+
+      <!-- Barnaby the Owl Tip Toast -->
+      <div id="owl-toast" class="owl-toast hidden" aria-live="polite">
+        <div class="owl-avatar">🦉</div>
+        <div class="owl-content">
+          <div class="owl-name">Barnaby · Dein London-Reiseführer</div>
+          <div id="owl-en" class="owl-en">Hello traveller! Click any glowing object!</div>
+          <div id="owl-de" class="owl-de">Hallo Reisender! Klicke ein leuchtendes Objekt an!</div>
+        </div>
+        <button id="owl-close" class="card-close">✕</button>
+      </div>
+
+      <!-- Travel Postcard Transition Overlay -->
+      <div id="travel-banner" class="travel-banner hidden">
+        <span id="travel-icon" class="travel-icon">✈️</span>
+        <span id="travel-text">Reise geht weiter nach Bahnhof…</span>
       </div>
 
       <!-- Stamp Earned Toast -->
